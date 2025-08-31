@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AR Diagnostic Test</title>
+  <style>
+    body { background:#111; color:#0ff; font-family:monospace; padding:20px; }
+    h1 { font-size:18px; }
+    #output { white-space:pre-wrap; background:#000; padding:12px; border-radius:8px; margin-top:12px; font-size:14px; }
+    button { margin-top:12px; padding:10px; background:#0ff; color:#000; font-weight:bold; border:none; border-radius:8px; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <h1>AR Capability Diagnostic</h1>
+  <div id="output">Checking...</div>
+  <button id="tryAR" style="display:none;">Try AR Session</button>
+
+<script>
+const out = document.getElementById('output');
+const tryBtn = document.getElementById('tryAR');
+
+function log(msg){
+  out.textContent += '\n' + msg;
+  console.log(msg);
+}
+
+async function checkAR(){
+  out.textContent = 'Running AR diagnostics...';
+  if(!('xr' in navigator)){
+    log('navigator.xr: NOT PRESENT ❌');
+    return;
+  }
+  log('navigator.xr: PRESENT ✅');
+
+  if(typeof navigator.xr.isSessionSupported === 'function'){
+    try {
+      const supported = await navigator.xr.isSessionSupported('immersive-ar');
+      log('isSessionSupported("immersive-ar"): ' + supported);
+      if(supported){
+        log('AR sessions SUPPORTED ✅');
+        tryBtn.style.display = 'block';
+      } else {
+        log('AR sessions NOT supported ❌ (by browser/device)');
+      }
+    } catch(err){
+      log('Error in isSessionSupported: ' + err.message);
+    }
+  } else {
+    log('isSessionSupported method missing ❌');
+  }
+}
+
+async function tryARSession(){
+  log('\nAttempting requestSession("immersive-ar")...');
+  try {
+    const session = await navigator.xr.requestSession('immersive-ar', {requiredFeatures:['hit-test']});
+    log('requestSession succeeded ✅');
+    log('Session object: ' + JSON.stringify(session));
+    session.end();
+  } catch(err){
+    log('requestSession ERROR ❌: ' + err.message);
+  }
+}
+
+tryBtn.addEventListener('click', tryARSession);
+checkAR();
+</script>
+</body>
+</html>
